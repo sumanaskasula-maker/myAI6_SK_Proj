@@ -455,6 +455,11 @@ export default function Chat() {
           <div className={`flex min-h-full flex-col items-center ${messages.length <= 1 ? "justify-center" : "justify-end"}`}>
             {isClient && (
               <>
+                {messages.length <= 1 && (
+                  <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Bike className="size-9" strokeWidth={1.5} />
+                  </div>
+                )}
                 <MessageWall
                   messages={messages}
                   status={status}
@@ -508,7 +513,7 @@ export default function Chat() {
                         <Textarea
                           {...field}
                           rows={1}
-                          className="min-h-14 max-h-48 resize-none overflow-y-auto rounded-[20px] bg-card pl-5 pr-24 py-[18px] leading-5"
+                          className="min-h-14 max-h-48 resize-none overflow-y-auto rounded-[20px] bg-card pl-5 pr-24 py-[18px] leading-5 shadow-lg shadow-black/5 border border-border/60"
                           placeholder={isListening ? "Listening..." : "Type your message here... (Shift+Enter for a new line)"}
                           disabled={status === "streaming"}
                           aria-invalid={fieldState.invalid}

@@ -172,7 +172,7 @@ export function AssistantMessage({
                 {!isLastText && isAfterTool && (
                   <ProcessingIndicator isStreaming={isPartStreaming} />
                 )}
-                <div className="rounded-2xl bg-muted/70 dark:bg-white/5 px-4 py-3">
+                <div className="rounded-2xl bg-card/90 dark:bg-white/5 px-4 py-3 shadow-sm border border-black/5 dark:border-white/10">
                   <Response isAnimating={isPartStreaming}>
                     {displayText}
                   </Response>
