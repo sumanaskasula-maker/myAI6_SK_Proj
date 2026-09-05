@@ -12,6 +12,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, UIMessage } from "ai";
 import {
   ArrowUp,
+  Bike,
   Download,
   FileText,
   Mic,
@@ -392,7 +393,14 @@ export default function Chat() {
                 <PanelLeft className="size-4" />
               </Button>
             </ChatHeaderBlock>
-            <ChatHeaderBlock className="justify-center items-center" />
+            <ChatHeaderBlock className="justify-center items-center gap-2">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground/80">
+                <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Bike className="size-3.5" />
+                </span>
+                {AI_NAME}
+              </div>
+            </ChatHeaderBlock>
 
             <ChatHeaderBlock className="justify-end gap-2">
               {/* Context Memory dropdown (toggle via COMPACTION_SHOW_CONTEXT_MEMORY in config) */}
@@ -444,7 +452,7 @@ export default function Chat() {
         </div>
 
         <div className="h-screen w-full overflow-y-auto px-3 sm:px-5 py-4 pt-[88px] pb-[170px]">
-          <div className="flex min-h-full flex-col items-center justify-end">
+          <div className={`flex min-h-full flex-col items-center ${messages.length <= 1 ? "justify-center" : "justify-end"}`}>
             {isClient && (
               <>
                 <MessageWall

@@ -15,6 +15,7 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { saveFeedback, loadFeedback } from "@/lib/storage";
+import { Bike } from "lucide-react";
 
 function FeedbackButtons({ messageId, conversationId }: { messageId: string; conversationId?: string }) {
   const [rating, setRating] = useState<"up" | "down" | null>(() => {
@@ -132,7 +133,11 @@ export function AssistantMessage({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full flex gap-3">
+      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <Bike className="size-4" />
+      </div>
+      <div className="flex-1 min-w-0">
       <div className="text-sm flex flex-col gap-4">
         {message.parts.map((part, i) => {
           const isPartStreaming =
@@ -167,9 +172,11 @@ export function AssistantMessage({
                 {!isLastText && isAfterTool && (
                   <ProcessingIndicator isStreaming={isPartStreaming} />
                 )}
-                <Response isAnimating={isPartStreaming}>
-                  {displayText}
-                </Response>
+                <div className="rounded-2xl bg-muted/70 dark:bg-white/5 px-4 py-3">
+                  <Response isAnimating={isPartStreaming}>
+                    {displayText}
+                  </Response>
+                </div>
                 {options.length > 0 && (
                   <QuickOptions options={options} onSelect={onOptionSelect!} />
                 )}
@@ -215,6 +222,7 @@ export function AssistantMessage({
       </div>
       {sources.length > 0 && <Sources sources={sources} />}
       {showFeedback && <FeedbackButtons messageId={message.id} conversationId={conversationId} />}
+      </div>
     </div>
   );
 }

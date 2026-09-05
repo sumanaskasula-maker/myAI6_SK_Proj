@@ -22,7 +22,7 @@ export function QuickOptions({
           variant="outline"
           size="sm"
           disabled={disabled}
-          className="rounded-full h-auto py-1.5 px-3.5 text-sm whitespace-normal text-left"
+          className="rounded-full h-auto py-1.5 px-3.5 text-sm whitespace-normal text-left border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:text-primary"
           onClick={() => onSelect(option)}
         >
           {option}
