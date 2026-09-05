@@ -6,6 +6,8 @@ import { ReasoningPart } from "./reasoning-part";
 import { ToolCall, ToolResult } from "./tool-call";
 import { Sources } from "./sources";
 import { rewriteCitationsInParts } from "@/lib/citations";
+import { extractQuickOptions } from "@/lib/quick-options";
+import { QuickOptions } from "./quick-options";
 import type { UISource } from "@/types/data";
 import { AssemblingIndicator } from "../ai-elements/assembling-indicator";
 import { ProcessingIndicator } from "../ai-elements/processing-indicator";
@@ -13,6 +15,7 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { saveFeedback, loadFeedback } from "@/lib/storage";
+import { Bike } from "lucide-react";
 
 function FeedbackButtons({ messageId, conversationId }: { messageId: string; conversationId?: string }) {
   const [rating, setRating] = useState<"up" | "down" | null>(() => {
@@ -69,6 +72,7 @@ export function AssistantMessage({
   durations,
   onDurationChange,
   conversationId,
+  onOptionSelect,
 }: {
   message: UIMessage;
   status?: string;
@@ -76,6 +80,7 @@ export function AssistantMessage({
   durations?: Record<string, number>;
   onDurationChange?: (key: string, duration: number) => void;
   conversationId?: string;
+  onOptionSelect?: (value: string) => void;
 }) {
   const isStreaming = status === "streaming" && isLastMessage;
   const showFeedback = !isStreaming && message.parts.some((p) => p.type === "text");
@@ -128,7 +133,11 @@ export function AssistantMessage({
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full flex gap-3">
+      <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <Bike className="size-4" />
+      </div>
+      <div className="flex-1 min-w-0">
       <div className="text-sm flex flex-col gap-4">
         {message.parts.map((part, i) => {
           const isPartStreaming =
@@ -143,6 +152,15 @@ export function AssistantMessage({
             const hasIntermediateProcessingText = isLastText && seenTool && message.parts.some(
               (p, idx) => idx < i && p.type === "text" && hasToolBefore.has(idx)
             );
+            const rawText = rewrittenByIndex.get(i) ?? part.text;
+            // Quick-reply chips: only parsed off the last text part of the
+            // live (last) message, and only once it's done streaming — a
+            // partial "OPTIONS:" block mid-stream should render as plain text.
+            const canShowOptions =
+              isLastText && isLastMessage && !isStreaming && !!onOptionSelect;
+            const { text: displayText, options } = canShowOptions
+              ? extractQuickOptions(rawText)
+              : { text: rawText, options: [] as string[] };
             return (
               <div key={`${message.id}-${i}`}>
                 {isLastText && isAfterTool && !hasIntermediateProcessingText && (
@@ -154,9 +172,14 @@ export function AssistantMessage({
                 {!isLastText && isAfterTool && (
                   <ProcessingIndicator isStreaming={isPartStreaming} />
                 )}
-                <Response isAnimating={isPartStreaming}>
-                  {rewrittenByIndex.get(i) ?? part.text}
-                </Response>
+                <div className="rounded-2xl bg-card/90 dark:bg-white/5 px-4 py-3 shadow-sm border border-black/5 dark:border-white/10">
+                  <Response isAnimating={isPartStreaming}>
+                    {displayText}
+                  </Response>
+                </div>
+                {options.length > 0 && (
+                  <QuickOptions options={options} onSelect={onOptionSelect!} />
+                )}
               </div>
             );
           } else if (part.type === "reasoning") {
@@ -199,6 +222,7 @@ export function AssistantMessage({
       </div>
       {sources.length > 0 && <Sources sources={sources} />}
       {showFeedback && <FeedbackButtons messageId={message.id} conversationId={conversationId} />}
+      </div>
     </div>
   );
 }

@@ -7,7 +7,14 @@ import {
   ENABLE_VECTOR_SEARCH,
   MAX_KB_SEARCHES,
   MAX_WEB_SEARCHES,
+  OWNER_PROFILE_SOURCES,
 } from "@/config";
+
+// fetchOwnerProfiles only makes sense when there are owner profile pages
+// configured (e.g. a personal-assistant deployment). For deployments like a
+// product/sales advisor with no single "owner", leave OWNER_PROFILE_SOURCES
+// empty in config.ts and this tool is skipped automatically.
+const HAS_OWNER_PROFILES = OWNER_PROFILE_SOURCES.length > 0;
 import type { UISource } from "@/types/data";
 
 /** Collector callback: the source plus its retrieved text (for claim verification). */
@@ -25,7 +32,9 @@ export function buildToolSet(collect: CollectSource = () => {}): ToolSet {
     ...(ENABLE_WEB_SEARCH
       ? {
           webSearch: createWebSearch(collect),
-          fetchOwnerProfiles: createFetchOwnerProfiles(collect),
+          ...(HAS_OWNER_PROFILES
+            ? { fetchOwnerProfiles: createFetchOwnerProfiles(collect) }
+            : {}),
         }
       : {}),
   };
@@ -46,8 +55,7 @@ export function buildToolGuidance(): string {
   b. ONLY use webSearch if the user explicitly asks about recent developments or "since [year]" on a topic the KB covers.
   c. NEVER use webSearch for topics unrelated to the knowledge base. This is NOT a general search engine.
   d. Prefer a single webSearch call with 2-3 additionalQueries over several separate calls. Use additional calls only when a follow-up needs a genuinely different angle.
-- fetchOwnerProfiles: MAX 1 call. Call it for ANY question about the owner — bio, "tell me about them", current role, recent activity, latest publications — in addition to the KB search. The KB snapshot may be stale on current facts; live profiles win on current position/affiliation. If a profile is unavailable or lacks detail, fall back to a broad webSearch WITHOUT includeDomains.
-- ALWAYS search the knowledge base FIRST before considering web search.
+${HAS_OWNER_PROFILES ? `- fetchOwnerProfiles: MAX 1 call. Call it for ANY question about the owner — bio, "tell me about them", current role, recent activity, latest publications — in addition to the KB search. The KB snapshot may be stale on current facts; live profiles win on current position/affiliation. If a profile is unavailable or lacks detail, fall back to a broad webSearch WITHOUT includeDomains.\n` : ""}- ALWAYS search the knowledge base FIRST before considering web search.
 - Do NOT call both tools simultaneously — search KB first, evaluate, then decide.`
       );
     }

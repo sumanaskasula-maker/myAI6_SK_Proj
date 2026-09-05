@@ -20,16 +20,16 @@ function getDateAndTime(): string {
 export const DATE_AND_TIME = getDateAndTime();
 
 // --- Assistant identity (all user-facing naming derives from these) ---
-export const AI_NAME = "myAI6"; // ← your assistant's name
-export const OWNER_NAME = "Your Name"; // ← the person this assistant represents
+export const AI_NAME = "RideWise"; // ← your assistant's name (rename freely)
+export const OWNER_NAME = "our showroom"; // ← the dealership/brand this assistant represents
 export const AI_DESCRIPTION = `
-${AI_NAME} is ${OWNER_NAME}'s AI assistant. It answers questions about ${OWNER_NAME}'s work using a curated knowledge base, and can search the web for current information.
+${AI_NAME} is a bike-buying advisor for customers shopping for a motorcycle or scooter in India. It has a conversational, showroom-salesperson style: it asks a few easy, non-technical questions to understand what a customer actually needs, then recommends a shortlist of models using the indexed bike knowledge base plus live web information.
 `.trim();
 
 // Browser tab / metadata title. Change freely — one line, no other edits needed.
 export const BROWSER_TAB_TITLE = `${AI_NAME}`;
 
-export const WELCOME_MESSAGE = `Hello! I'm ${AI_NAME}, ${OWNER_NAME}'s AI assistant.`;
+export const WELCOME_MESSAGE = `Hi, I'm ${AI_NAME}! Looking for your next bike? Tell me a bit about how you'll ride, and I'll help you find the right ones.`;
 export const CLEAR_CHAT_TEXT = "New";
 
 // --- Defaults (PROF REQUIREMENT: Anthropic by default) ---
@@ -101,14 +101,16 @@ export const PINECONE_VISUALS_PER_SOURCE = 20; // max figure/table chunks merged
 // Update this list whenever you ingest new content into Pinecone.
 // The model uses this to decide whether to search the KB or skip it entirely.
 export const KB_SCOPE = `
-The knowledge base covers ${OWNER_NAME}'s work. Topics include:
+The knowledge base covers motorcycles and scooters sold in India. Topics include:
 
-DOCUMENTS AND TOPICS (replace these examples with what you actually ingest):
-- [Example] A research paper or article, its methods, and its findings
-- [Example] A CV or resume: education, employment, projects, awards
-- [Example] Presentation slides or a talk transcript
+DOCUMENTS AND TOPICS (update this as you ingest real content):
+- Model specification sheets: engine, mileage, weight, seat height, ground clearance, fuel tank, features
+- Variant and colour options, and on-road/ex-showroom price ranges by city
+- Segment/use-case fit: daily commuting, long-distance touring, off-road, sporty/performance, city scooters
+- Owner and expert reviews, common pros/cons, reliability and service-cost notes
+- Comparison notes between competing models (e.g. same segment, similar price band)
 
-Any question about ${OWNER_NAME} or the topics above is within scope.
+Any question about buying, comparing, or choosing a two-wheeler in India is within scope.
 `.trim();
 
 // --- Exa Web Search ---
@@ -118,19 +120,13 @@ export const EXA_MAX_CHARACTERS = 3000; // max chars of page text per result
 // "preferred" makes Exa fetch live page content when possible, reducing the odds
 // that stale or deleted pages (e.g. dead university URLs) surface in results.
 export const EXA_LIVECRAWL = "preferred" as const; // "never" | "fallback" | "preferred" | "always"
-export const EXA_SYSTEM_PROMPT = `Prefer authoritative and academic sources: peer-reviewed journals, arxiv.org, SSRN, NBER, university sites, and official publications. For questions about ${OWNER_NAME}, prioritize their official profiles: LinkedIn, ORCID, ResearchGate, and Google Scholar. Avoid duplicates, low-quality aggregators, and pages that appear outdated or removed.`;
+export const EXA_SYSTEM_PROMPT = `Prefer authoritative, India-specific sources on motorcycles and scooters: official manufacturer sites (Hero MotoCorp, Honda, Bajaj, TVS, Royal Enfield, Yamaha, Suzuki, KTM, Ola, Ather, etc.), and reputable automotive outlets such as BikeDekho, ZigWheels, Autocar India, and Team-BHP for real owner reviews. Prefer current-year pricing and availability pages. Avoid duplicates, low-quality aggregators, and pages that appear outdated or discontinued.`;
 
-// --- Owner Profile Sources (latest information and news) ---
-// The owner's official profile pages. For "latest on the owner" questions, the
-// model is instructed to web-search these places FIRST: the exact URLs are
-// listed in the system prompt, and webSearch restricts results to their
-// domains via includeDomains. Update here when a profile moves; everything
-// else derives from this list.
-export const OWNER_PROFILE_SOURCES = [
-  // Replace with the owner's real public profile pages (name + exact URL).
-  { name: "Google Scholar", url: "https://scholar.google.com/citations?user=YOUR_SCHOLAR_ID" },
-  { name: "LinkedIn", url: "https://www.linkedin.com/in/your-profile/" },
-];
+// --- Owner Profile Sources ---
+// Not used by this assistant (there is no single "owner" persona to fetch
+// profiles for). Leave empty — this disables the fetchOwnerProfiles tool
+// automatically (see lib/ai/tools.ts).
+export const OWNER_PROFILE_SOURCES: { name: string; url: string }[] = [];
 
 // Max characters of live page text fetched per profile (fetchOwnerProfiles tool).
 export const OWNER_PROFILE_MAX_CHARACTERS = 5000;
