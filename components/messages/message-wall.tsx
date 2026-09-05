@@ -4,7 +4,7 @@ import { UserMessage } from "./user-message";
 import { AssistantMessage } from "./assistant-message";
 
 
-export function MessageWall({ messages, status, durations, onDurationChange, conversationId }: { messages: UIMessage[]; status?: string; durations?: Record<string, number>; onDurationChange?: (key: string, duration: number) => void; conversationId?: string }) {
+export function MessageWall({ messages, status, durations, onDurationChange, conversationId, onOptionSelect }: { messages: UIMessage[]; status?: string; durations?: Record<string, number>; onDurationChange?: (key: string, duration: number) => void; conversationId?: string; onOptionSelect?: (value: string) => void }) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -22,7 +22,7 @@ export function MessageWall({ messages, status, durations, onDurationChange, con
                     const isLastMessage = messageIndex === messages.length - 1;
                     return (
                         <div key={message.id} className="w-full">
-                            {message.role === "user" ? <UserMessage message={message} /> : <AssistantMessage message={message} status={status} isLastMessage={isLastMessage} durations={durations} onDurationChange={onDurationChange} conversationId={conversationId} />}
+                            {message.role === "user" ? <UserMessage message={message} /> : <AssistantMessage message={message} status={status} isLastMessage={isLastMessage} durations={durations} onDurationChange={onDurationChange} conversationId={conversationId} onOptionSelect={onOptionSelect} />}
                         </div>
                     );
                 })}

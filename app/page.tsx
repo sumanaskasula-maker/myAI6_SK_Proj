@@ -14,6 +14,7 @@ import {
   ArrowUp,
   Download,
   FileText,
+  Mic,
   PanelLeft,
   Plus,
   Square,
@@ -181,15 +182,86 @@ export default function Chat() {
     defaultValues: { message: "" },
   });
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
+  // Shared send path for both the text form and quick-reply option chips.
+  function sendText(text: string) {
+    const trimmed = text.trim();
+    if (!trimmed) return;
     // Include stored summary in the request body for stateful compaction
     const s = summaryRef.current;
     sendMessage({
-      text: data.message,
+      text: trimmed,
       body: s ? { compactedSummary: s.summary, summarizedUpTo: s.summarizedUpTo } : undefined,
     } as any);
+  }
+
+  function onSubmit(data: z.infer<typeof formSchema>) {
+    sendText(data.message);
     form.reset();
   }
+
+  // Tapping a quick-reply chip sends it immediately, same as typing + Enter.
+  function handleOptionSelect(value: string) {
+    sendText(value);
+  }
+
+  // --- Voice input (Web Speech API) ---
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+
+  useEffect(() => {
+    setVoiceSupported(
+      typeof window !== "undefined" &&
+        !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+    );
+  }, []);
+
+  function toggleVoiceInput() {
+    const SpeechRecognition =
+      typeof window !== "undefined" &&
+      ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+    if (!SpeechRecognition) {
+      toast.error("Voice input isn't supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      form.setValue("message", transcript, { shouldValidate: true, shouldDirty: true });
+    };
+    recognition.onerror = () => {
+      setIsListening(false);
+      toast.error("Couldn't hear that — please try again or type instead.");
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }
+
+  useEffect(() => {
+    // Stop listening if the component unmounts mid-recognition.
+    return () => {
+      recognitionRef.current?.stop();
+    };
+  }, []);
 
   function switchConversation(id: string) {
     setActiveConvId(id);
@@ -386,6 +458,7 @@ export default function Chat() {
                       [k]: d,
                     }))
                   }
+                  onOptionSelect={handleOptionSelect}
                 />
                 {status === "submitted" && (
                   <div className="max-w-3xl w-full">
@@ -427,8 +500,8 @@ export default function Chat() {
                         <Textarea
                           {...field}
                           rows={1}
-                          className="min-h-14 max-h-48 resize-none overflow-y-auto rounded-[20px] bg-card pl-5 pr-14 py-[18px] leading-5"
-                          placeholder="Type your message here... (Shift+Enter for a new line)"
+                          className="min-h-14 max-h-48 resize-none overflow-y-auto rounded-[20px] bg-card pl-5 pr-24 py-[18px] leading-5"
+                          placeholder={isListening ? "Listening..." : "Type your message here... (Shift+Enter for a new line)"}
                           disabled={status === "streaming"}
                           aria-invalid={fieldState.invalid}
                           autoComplete="off"
@@ -439,6 +512,22 @@ export default function Chat() {
                             }
                           }}
                         />
+
+                        {voiceSupported && (
+                          <Button
+                            className={`absolute bottom-2.5 right-12 rounded-full ${isListening ? "animate-pulse" : ""}`}
+                            type="button"
+                            variant={isListening ? "default" : "ghost"}
+                            size="icon"
+                            disabled={status === "streaming"}
+                            onClick={toggleVoiceInput}
+                            aria-pressed={isListening}
+                            aria-label={isListening ? "Stop voice input" : "Start voice input"}
+                            title={isListening ? "Stop voice input" : "Speak your message"}
+                          >
+                            <Mic className="size-4" />
+                          </Button>
+                        )}
 
                         {(status === "ready" || status === "error") && (
                           <Button

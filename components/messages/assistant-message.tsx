@@ -6,6 +6,8 @@ import { ReasoningPart } from "./reasoning-part";
 import { ToolCall, ToolResult } from "./tool-call";
 import { Sources } from "./sources";
 import { rewriteCitationsInParts } from "@/lib/citations";
+import { extractQuickOptions } from "@/lib/quick-options";
+import { QuickOptions } from "./quick-options";
 import type { UISource } from "@/types/data";
 import { AssemblingIndicator } from "../ai-elements/assembling-indicator";
 import { ProcessingIndicator } from "../ai-elements/processing-indicator";
@@ -69,6 +71,7 @@ export function AssistantMessage({
   durations,
   onDurationChange,
   conversationId,
+  onOptionSelect,
 }: {
   message: UIMessage;
   status?: string;
@@ -76,6 +79,7 @@ export function AssistantMessage({
   durations?: Record<string, number>;
   onDurationChange?: (key: string, duration: number) => void;
   conversationId?: string;
+  onOptionSelect?: (value: string) => void;
 }) {
   const isStreaming = status === "streaming" && isLastMessage;
   const showFeedback = !isStreaming && message.parts.some((p) => p.type === "text");
@@ -143,6 +147,15 @@ export function AssistantMessage({
             const hasIntermediateProcessingText = isLastText && seenTool && message.parts.some(
               (p, idx) => idx < i && p.type === "text" && hasToolBefore.has(idx)
             );
+            const rawText = rewrittenByIndex.get(i) ?? part.text;
+            // Quick-reply chips: only parsed off the last text part of the
+            // live (last) message, and only once it's done streaming — a
+            // partial "OPTIONS:" block mid-stream should render as plain text.
+            const canShowOptions =
+              isLastText && isLastMessage && !isStreaming && !!onOptionSelect;
+            const { text: displayText, options } = canShowOptions
+              ? extractQuickOptions(rawText)
+              : { text: rawText, options: [] as string[] };
             return (
               <div key={`${message.id}-${i}`}>
                 {isLastText && isAfterTool && !hasIntermediateProcessingText && (
@@ -155,8 +168,11 @@ export function AssistantMessage({
                   <ProcessingIndicator isStreaming={isPartStreaming} />
                 )}
                 <Response isAnimating={isPartStreaming}>
-                  {rewrittenByIndex.get(i) ?? part.text}
+                  {displayText}
                 </Response>
+                {options.length > 0 && (
+                  <QuickOptions options={options} onSelect={onOptionSelect!} />
+                )}
               </div>
             );
           } else if (part.type === "reasoning") {
