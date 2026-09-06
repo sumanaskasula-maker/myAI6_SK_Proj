@@ -85,7 +85,7 @@ export const MODERATION_DENIAL_MESSAGE_DEFAULT =
 // --- Pinecone ---
 export const PINECONE_TOP_K = 20; // sized for a multi-document KB; raise if the index grows substantially
 export const PINECONE_MIN_SCORE = 0.1; // filter out low-relevance matches (lowered to catch acronym/abbreviation queries)
-export const PINECONE_INDEX_NAME = "myai6"; // Pinecone index names must be lowercase (letters, numbers, hyphens)
+export const PINECONE_INDEX_NAME = "rag-ai-agent-proj"; // Pinecone index names must be lowercase (letters, numbers, hyphens)
 
 // Parent-child retrieval (3-namespace architecture)
 export const PINECONE_USE_PARENT_CHILD = true; // false = legacy "default" namespace
