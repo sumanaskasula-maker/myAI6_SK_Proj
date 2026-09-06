@@ -171,3 +171,105 @@ export function AssistantMessage({
               ? extractQuickOptions(rawText)
               : { text: rawText, options: [] as string[] };
             return (
+              <div key={`${message.id}-${i}`}>
+                {isLastText && isAfterTool && !hasIntermediateProcessingText && (
+                  <ProcessingIndicator isStreaming={false} />
+                )}
+                {isLastText && hasContentBefore && (
+                  <AssemblingIndicator isStreaming={isPartStreaming} />
+                )}
+                {!isLastText && isAfterTool && (
+                  <ProcessingIndicator isStreaming={isPartStreaming} />
+                )}
+                <div className="rounded-2xl bg-card/90 dark:bg-white/5 px-4 py-3 shadow-sm border border-black/5 dark:border-white/10">
+                  <Response isAnimating={isPartStreaming}>
+                    {displayText}
+                  </Response>
+                </div>
+                {options.length > 0 && (
+                  <QuickOptions options={options} onSelect={onOptionSelect!} />
+                )}
+              </div>
+            );
+          } else if (part.type === "reasoning") {
+            return (
+              <ReasoningPart
+                key={`${message.id}-${i}`}
+                part={part}
+                isStreaming={isPartStreaming}
+                category={hasToolBefore.has(i) ? "processing" : "thinking"}
+                duration={duration}
+                onDurationChange={
+                  onDurationChange
+                    ? (d) => onDurationChange(durationKey, d)
+                    : undefined
+                }
+              />
+            );
+          } else if (part.type === "tool-showBikeCard") {
+            // Special-cased ahead of the generic tool renderer below: this
+            // tool's output is a visual card group, not a text/JSON chip.
+            if ("state" in part && part.state === "output-available") {
+              const output = (part as any).output as { bikes?: unknown[] } | undefined;
+              if (!output?.bikes?.length) return null;
+              return (
+                <div key={`${message.id}-${i}`}>
+                  <BikeCardGroup bikes={output.bikes as any} />
+                </div>
+              );
+            }
+            if (isToolErrorState(part) || !isStreaming) {
+              // Explicit error, or the response has already finished and
+              // this never reached output-available — settle it rather
+              // than let the card-loading chip animate forever.
+              return (
+                <ToolError
+                  key={`${message.id}-${i}`}
+                  part={part as unknown as ToolResultPart}
+                />
+              );
+            }
+            // Still loading (fetching the OEM photo) — reuse the generic
+            // in-progress chip rather than inventing a second loading state.
+            return (
+              <ToolCall
+                key={`${message.id}-${i}`}
+                part={part as unknown as ToolCallPart}
+              />
+            );
+          } else if (
+            part.type.startsWith("tool-") ||
+            part.type === "dynamic-tool"
+          ) {
+            if ("state" in part && part.state === "output-available") {
+              return (
+                <ToolResult
+                  key={`${message.id}-${i}`}
+                  part={part as unknown as ToolResultPart}
+                />
+              );
+            } else if (isToolErrorState(part) || !isStreaming) {
+              return (
+                <ToolError
+                  key={`${message.id}-${i}`}
+                  part={part as unknown as ToolResultPart}
+                />
+              );
+            } else {
+              return (
+                <ToolCall
+                  key={`${message.id}-${i}`}
+                  part={part as unknown as ToolCallPart}
+                />
+              );
+            }
+          }
+          return null;
+        })}
+      </div>
+      {sources.length > 0 && <Sources sources={sources} />}
+      {showFeedback && <FeedbackButtons messageId={message.id} conversationId={conversationId} />}
+      </div>
+    </div>
+  );
+}
