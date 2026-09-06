@@ -3,7 +3,7 @@
 import { UIMessage, ToolCallPart, ToolResultPart } from "ai";
 import { Response } from "@/components/ai-elements/response";
 import { ReasoningPart } from "./reasoning-part";
-import { ToolCall, ToolResult } from "./tool-call";
+import { ToolCall, ToolResult, ToolError } from "./tool-call";
 import { Sources } from "./sources";
 import { rewriteCitationsInParts } from "@/lib/citations";
 import { extractQuickOptions } from "@/lib/quick-options";
@@ -16,6 +16,14 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { saveFeedback, loadFeedback } from "@/lib/storage";
 import { Bike } from "lucide-react";
+
+// AI SDK v6 tool parts settle into "output-available" (success) or an error
+// terminal state — different SDK/tool combinations have used "output-error"
+// or a plain "error" state string, so check both rather than assuming one.
+function isToolErrorState(part: unknown): boolean {
+  const state = (part as { state?: string })?.state;
+  return state === "output-error" || state === "error";
+}
 
 function FeedbackButtons({ messageId, conversationId }: { messageId: string; conversationId?: string }) {
   const [rating, setRating] = useState<"up" | "down" | null>(() => {
@@ -204,6 +212,19 @@ export function AssistantMessage({
             if ("state" in part && part.state === "output-available") {
               return (
                 <ToolResult
+                  key={`${message.id}-${i}`}
+                  part={part as unknown as ToolResultPart}
+                />
+              );
+            } else if (isToolErrorState(part) || !isStreaming) {
+              // Explicit error state, OR the response has already finished
+              // (this message is done streaming) and the part still never
+              // reached "output-available". That combination can only mean
+              // the call died silently without an error state ever being
+              // set on the part — treat it as failed rather than let it
+              // animate forever after the answer has already settled.
+              return (
+                <ToolError
                   key={`${message.id}-${i}`}
                   part={part as unknown as ToolResultPart}
                 />
