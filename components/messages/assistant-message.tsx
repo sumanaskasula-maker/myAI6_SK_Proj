@@ -15,7 +15,8 @@ import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { saveFeedback, loadFeedback } from "@/lib/storage";
-import { Bike } from "lucide-react";
+import { RideWiseIcon } from "@/components/brand/ridewise-icon";
+import { BikeCardGroup } from "./bike-card";
 
 // AI SDK v6 tool parts settle into "output-available" (success) or an error
 // terminal state — different SDK/tool combinations have used "output-error"
@@ -143,7 +144,7 @@ export function AssistantMessage({
   return (
     <div className="w-full flex gap-3">
       <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-        <Bike className="size-4" />
+        <RideWiseIcon className="size-4" />
       </div>
       <div className="flex-1 min-w-0">
       <div className="text-sm flex flex-col gap-4">
@@ -170,80 +171,3 @@ export function AssistantMessage({
               ? extractQuickOptions(rawText)
               : { text: rawText, options: [] as string[] };
             return (
-              <div key={`${message.id}-${i}`}>
-                {isLastText && isAfterTool && !hasIntermediateProcessingText && (
-                  <ProcessingIndicator isStreaming={false} />
-                )}
-                {isLastText && hasContentBefore && (
-                  <AssemblingIndicator isStreaming={isPartStreaming} />
-                )}
-                {!isLastText && isAfterTool && (
-                  <ProcessingIndicator isStreaming={isPartStreaming} />
-                )}
-                <div className="rounded-2xl bg-card/90 dark:bg-white/5 px-4 py-3 shadow-sm border border-black/5 dark:border-white/10">
-                  <Response isAnimating={isPartStreaming}>
-                    {displayText}
-                  </Response>
-                </div>
-                {options.length > 0 && (
-                  <QuickOptions options={options} onSelect={onOptionSelect!} />
-                )}
-              </div>
-            );
-          } else if (part.type === "reasoning") {
-            return (
-              <ReasoningPart
-                key={`${message.id}-${i}`}
-                part={part}
-                isStreaming={isPartStreaming}
-                category={hasToolBefore.has(i) ? "processing" : "thinking"}
-                duration={duration}
-                onDurationChange={
-                  onDurationChange
-                    ? (d) => onDurationChange(durationKey, d)
-                    : undefined
-                }
-              />
-            );
-          } else if (
-            part.type.startsWith("tool-") ||
-            part.type === "dynamic-tool"
-          ) {
-            if ("state" in part && part.state === "output-available") {
-              return (
-                <ToolResult
-                  key={`${message.id}-${i}`}
-                  part={part as unknown as ToolResultPart}
-                />
-              );
-            } else if (isToolErrorState(part) || !isStreaming) {
-              // Explicit error state, OR the response has already finished
-              // (this message is done streaming) and the part still never
-              // reached "output-available". That combination can only mean
-              // the call died silently without an error state ever being
-              // set on the part — treat it as failed rather than let it
-              // animate forever after the answer has already settled.
-              return (
-                <ToolError
-                  key={`${message.id}-${i}`}
-                  part={part as unknown as ToolResultPart}
-                />
-              );
-            } else {
-              return (
-                <ToolCall
-                  key={`${message.id}-${i}`}
-                  part={part as unknown as ToolCallPart}
-                />
-              );
-            }
-          }
-          return null;
-        })}
-      </div>
-      {sources.length > 0 && <Sources sources={sources} />}
-      {showFeedback && <FeedbackButtons messageId={message.id} conversationId={conversationId} />}
-      </div>
-    </div>
-  );
-}
