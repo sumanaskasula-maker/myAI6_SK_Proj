@@ -85,7 +85,7 @@ export const MODERATION_DENIAL_MESSAGE_DEFAULT =
 // --- Pinecone ---
 export const PINECONE_TOP_K = 20; // sized for a multi-document KB; raise if the index grows substantially
 export const PINECONE_MIN_SCORE = 0.1; // filter out low-relevance matches (lowered to catch acronym/abbreviation queries)
-export const PINECONE_INDEX_NAME = "rag-ai-agent-proj"; // Pinecone index names must be lowercase (letters, numbers, hyphens)
+export const PINECONE_INDEX_NAME = "rag-ai-agent-proj"; // must match pinecone_index_name in the ingestion notebook's PipelineConfig — Pinecone index names must be lowercase (letters, numbers, hyphens)
 
 // Parent-child retrieval (3-namespace architecture)
 export const PINECONE_USE_PARENT_CHILD = true; // false = legacy "default" namespace
@@ -233,6 +233,25 @@ export const ENABLE_WEB_SEARCH =
 
 // Disable the Pinecone knowledge base by setting the env var: ENABLE_VECTOR_SEARCH=false
 // When off: the KB tool is removed from the model, no Pinecone connection is made,
-// and PINECONE_API_KEY is not needed. The bot answers from general knowledge (+ web search if enabled). 
+// and PINECONE_API_KEY is not needed. The bot answers from general knowledge (+ web search if enabled).
 export const ENABLE_VECTOR_SEARCH =
   process.env.ENABLE_VECTOR_SEARCH?.toLowerCase() !== "false";
+
+// --- Bike Card Images (showBikeCard tool) ---
+// Official manufacturer domains only — Exa image search is restricted to
+// these so a bike card can never show a random scraped/stock photo. Add a
+// brand's official domain here when its content is ingested into the KB and
+// you want its cards to carry a real photo (falls back to no image otherwise).
+export const OEM_IMAGE_DOMAINS = [
+  "bajajauto.com",
+  "hondawheelersindia.com",
+  "honda2wheelersindia.com",
+  "ktm.com",
+  "ktmindia.com",
+  "tvsmotor.com",
+  "royalenfield.com",
+  "heromotocorp.com",
+  "yamaha-motor-india.com",
+  "suzukimotorcycle.co.in",
+];
+export const OEM_IMAGE_SEARCH_TYPE = "auto" as const; // "auto" | "neural" | "deep" | "deep-reasoning" — see EXA_SEARCH_TYPE above for the tradeoffs; "auto" is fastest for a narrow, single-photo lookup like this
