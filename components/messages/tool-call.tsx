@@ -1,7 +1,7 @@
 "use client";
 
 import { ToolCallPart, ToolResultPart } from "ai";
-import { BookOpen, Globe, Search, Wrench } from "lucide-react";
+import { AlertCircle, BookOpen, Globe, Search, Wrench } from "lucide-react";
 import { Shimmer } from "../ai-elements/shimmer";
 import { useRotatingLabel } from "@/hooks/use-rotating-label";
 import { pickRandomPastTense, type FunLabelCategory } from "@/lib/fun-labels";
@@ -85,6 +85,14 @@ function formatToolArguments(
   }
 }
 
+// A short, human label per tool for the failed-state chip. Deliberately
+// plain (no "fun" rotating word) — a failure shouldn't look playful.
+const TOOL_LABEL: Record<string, string> = {
+  webSearch: "Web search",
+  vectorDatabaseSearch: "Knowledge base search",
+  fetchOwnerProfiles: "Owner profile lookup",
+};
+
 // ---- Components ----
 
 function RotatingLabel({ category }: { category: FunLabelCategory }) {
@@ -144,6 +152,23 @@ export function ToolResult({ part }: { part: ToolResultPart }) {
           {formattedArgs}
         </span>
       )}
+    </div>
+  );
+}
+
+// Renders a tool part that ended in a terminal error state (e.g. AI SDK's
+// "output-error"), instead of falling through to the animated in-progress
+// ToolCall forever. The model itself keeps going and answers from other
+// tools/knowledge — this chip is purely a UI acknowledgement so a stalled
+// backend call doesn't look like it's still running.
+export function ToolError({ part }: { part: ToolResultPart | ToolCallPart }) {
+  const toolName = extractToolName(part);
+  const label = (toolName && TOOL_LABEL[toolName]) || "This step";
+
+  return (
+    <div className="flex items-center gap-2 text-muted-foreground/80">
+      <AlertCircle className="w-4 h-4 shrink-0" />
+      <span>{label} didn&apos;t come through — continuing without it</span>
     </div>
   );
 }
