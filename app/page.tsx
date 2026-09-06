@@ -12,7 +12,6 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, UIMessage } from "ai";
 import {
   ArrowUp,
-  Bike,
   Download,
   FileText,
   Mic,
@@ -24,6 +23,8 @@ import { ThinkingIndicator } from "@/components/ai-elements/thinking-indicator";
 import { MessageWall } from "@/components/messages/message-wall";
 import { ChatHeader, ChatHeaderBlock } from "@/app/parts/chat-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RideWiseIcon } from "@/components/brand/ridewise-icon";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { AI_NAME, CLEAR_CHAT_TEXT, OWNER_NAME, WELCOME_MESSAGE, COMPACTION_ENABLED, COMPACTION_TOKEN_THRESHOLD, COMPACTION_SHOW_CONTEXT_MEMORY, MAX_MESSAGE_TEXT_LENGTH } from "@/config";
 import Image from "next/image";
@@ -396,7 +397,7 @@ export default function Chat() {
             <ChatHeaderBlock className="justify-center items-center gap-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground/80">
                 <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <Bike className="size-3.5" />
+                  <RideWiseIcon className="size-3.5" />
                 </span>
                 {AI_NAME}
               </div>
@@ -434,6 +435,7 @@ export default function Chat() {
                   </div>
                 );
               })()}
+              <ThemeToggle />
               <Button
                 variant="ghost"
                 size="icon"
@@ -457,7 +459,7 @@ export default function Chat() {
               <>
                 {messages.length <= 1 && (
                   <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Bike className="size-9" strokeWidth={1.5} />
+                    <RideWiseIcon className="size-9" strokeWidth={1.5} />
                   </div>
                 )}
                 <MessageWall
