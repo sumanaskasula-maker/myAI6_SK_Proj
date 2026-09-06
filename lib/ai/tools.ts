@@ -2,6 +2,7 @@ import { type ToolSet } from "ai";
 import { createWebSearch } from "@/app/api/chat/tools/web-search";
 import { createFetchOwnerProfiles } from "@/app/api/chat/tools/fetch-owner-profiles";
 import { createVectorDatabaseSearch } from "@/app/api/chat/tools/search-vector-database";
+import { createShowBikeCard } from "@/app/api/chat/tools/bike-card";
 import {
   ENABLE_WEB_SEARCH,
   ENABLE_VECTOR_SEARCH,
@@ -37,6 +38,10 @@ export function buildToolSet(collect: CollectSource = () => {}): ToolSet {
             : {}),
         }
       : {}),
+    // showBikeCard degrades gracefully without EXA_API_KEY (the card just
+    // renders with no photo — see findOemImage's try/catch in bike-card.ts),
+    // so it's registered unconditionally rather than gated on ENABLE_WEB_SEARCH.
+    showBikeCard: createShowBikeCard(),
   };
 }
 
@@ -82,6 +87,14 @@ Answer from your general knowledge.`
       );
     }
   }
+
+  sections.push(
+    `VISUAL BIKE CARDS (showBikeCard tool):
+- Call showBikeCard right after you recommend ONE specific model worth showing visually, or whenever the user asks to compare 2-4 named models — pass the facts you already retrieved (brand, model name, price range, up to 6 key specs). Do NOT call it for a vague question with no specific model(s) yet, and do NOT call it more than once per response.
+- Still write your normal prose answer around the call — the card supplements your answer, it does not replace it.
+- The tool fetches its own product photo from the manufacturer's official site. Never fabricate an image URL yourself, and never mention that a "photo search" or "Exa" happened.
+- Each bike's sourceUrl (where its photo came from) is for YOUR use only if the user explicitly asks "where's that photo from?" or otherwise asks for a source/link — never mention or paste it unprompted, and never render it as part of your normal answer.`
+  );
 
   sections.push(
     `IMPORTANT:
